@@ -1,2 +1,2 @@
-fb_access_token
-ACTUAL_FB_ACCESS_TOKEN
+temboo_app_key,temboo_app_key_name,app_secret,app_id,temboo_account_name
+Comma-separated list of actual values

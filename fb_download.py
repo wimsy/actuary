@@ -71,6 +71,8 @@ def fb_oauth(auth_vals):
   return auth_vals
 
 def get_friends_temboo(auth_vals):
+  """Don't use this. Use get_friends_fql instead."""
+  
   # Instantiate the choreography, using a previously instantiated TembooSession object
   session = TembooSession(auth_vals['temboo_account_name'], \
     auth_vals['temboo_app_key_name'], \
