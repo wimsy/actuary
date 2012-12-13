@@ -1,6 +1,9 @@
 import csv
 import webbrowser
 import json
+import facebook
+from datetime import date
+import datetime
 
 from temboo.core.session import *
 from temboo.Library.Facebook.OAuth import *
@@ -14,9 +17,16 @@ def get_authvals_csv(authf):
 		vals = f_iter.next()
 	return vals
 
-def fb_oauth():
-  auth_vals = get_authvals_csv('auth_keys.csv')
+def write_authvals_csv(authd, authf):
+	f = open(authf, 'wb')
+	fieldnames = tuple(authd.iterkeys())
+	headers = dict((n,n) for n in fieldnames)
+	f_iter = csv.DictWriter(f, fieldnames=fieldnames)
+	f_iter.writerow(headers)
+	f_iter.writerow(authd)
+	f.close
 
+def fb_oauth(auth_vals):
   # Instantiate the choreography, using a previously instantiated TembooSession object, eg:
   session = TembooSession(auth_vals['temboo_account_name'], \
     auth_vals['temboo_app_key_name'], \
@@ -57,9 +67,10 @@ def fb_oauth():
   auth_vals['access_token'] = finalizeOAuthResults.get_AccessToken()
   auth_vals['token_expires'] = finalizeOAuthResults.get_Expires()
   
+  write_authvals_csv(auth_vals,'auth_keys.csv')
   return auth_vals
 
-def get_friends(auth_vals):
+def get_friends_temboo(auth_vals):
   # Instantiate the choreography, using a previously instantiated TembooSession object
   session = TembooSession(auth_vals['temboo_account_name'], \
     auth_vals['temboo_app_key_name'], \
@@ -91,3 +102,45 @@ def get_friends(auth_vals):
     friend_count = len(friends_list)
     
   return friends_list
+  
+def extract_ids(friends_list):
+  ids = []
+  for friend in friends_list:
+    ids = ids + [friend['id']]
+  return ids
+  
+def get_friends_fql(auth_vals):
+  graph = facebook.GraphAPI(auth_vals['access_token'])
+  friends_data = \
+    graph.fql("SELECT uid,name,birthday_date,sex FROM user WHERE uid in (SELECT uid2 FROM friend WHERE uid1 = me())")
+  return friends_data
+  
+def calculate_age(born):
+  today = date.today()
+  try: # raised when birth date is February 29 and the current year is not a leap year
+      birthday = born.replace(year=today.year)
+  except ValueError:
+      birthday = born.replace(year=today.year, day=born.day-1)
+  if birthday > today:
+      return today.year - born.year - 1
+  else:
+      return today.year - born.year
+        
+def parse_birthdate(bday_str):
+  return datetime.datetime.strptime(bday_str, '%m/%d/%Y').date()
+  
+def filter_friends(friend_list):
+  for friend in friend_list:
+    if type(friend['birthday_date']) == type('str'):
+      if len(friend['birthday_date']) > 5:
+        born = parse_birthdate(friend['birthday_date'])
+        friend['age'] = calculate_age(born)
+  filtered_list = [friend for friend in friend_list if 'age' in friend and friend['sex'] != ""]
+  return filtered_list
+  
+def extract_age_sex_str(filtered_friend_list):
+  age_sex = []
+  for friend in filtered_friend_list:
+    age_sex = age_sex + [friend['age_sex']]
+  age_sex_str = " ".join(age_sex)
+  return age_sex_str, len(age_sex)
