@@ -138,6 +138,8 @@ def filter_friends(friend_list):
         born = parse_birthdate(friend['birthday_date'])
         friend['age'] = calculate_age(born)
   filtered_list = [friend for friend in friend_list if 'age' in friend and friend['sex'] != ""]
+  for friend in filtered_list:
+    friend['age_sex'] = str(friend['age'])+friend['sex'][0]
   return filtered_list
   
 def extract_age_sex_str(filtered_friend_list):
