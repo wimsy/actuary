@@ -84,7 +84,7 @@ def get_friends_temboo(auth_vals):
 
   # Set inputs
   friendsInputs.set_AccessToken(auth_vals['access_token'])
-  friendsInputs.set_Fields("id,name,birthday")
+  friendsInputs.set_Fields("id,birthday")
 #  friendsInputs.set_Limit(100)
 
   # Execute choreo
@@ -114,7 +114,7 @@ def extract_ids(friends_list):
 def get_friends_fql(auth_vals):
   graph = facebook.GraphAPI(auth_vals['access_token'])
   friends_data = \
-    graph.fql("SELECT uid,name,birthday_date,sex FROM user WHERE uid in (SELECT uid2 FROM friend WHERE uid1 = me())")
+    graph.fql("SELECT birthday_date,sex FROM user WHERE uid in (SELECT uid2 FROM friend WHERE uid1 = me())")
   return friends_data
   
 def calculate_age(born):
