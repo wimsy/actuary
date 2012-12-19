@@ -28,11 +28,13 @@ def death_thresholds(death_counts, thresholds):
     death_rates[threshold] = max(Series(np.where(cumul_outcomes > cutoff)[0]))
   return death_rates
   
-def run_years(start_year, end_year, stat_str, num_sims=100, thresholds=[0.05, 0.5, 0.95]):
+def run_years(end_year, stat_str, num_sims=100, thresholds=[0.05, 0.5, 0.95]):
   results = {}
   ages, ignore_years = parse_string(stat_str)
 #  print ages
-  start_year = max(start_year,datetime.datetime.today().year + 1)
+  start_year = datetime.datetime.today().year + 1
+  for threshold in thresholds:
+    results[threshold] = {(start_year - 1): 0}
 #  print start_year
   for year in range(start_year, end_year + 1):
     print year
@@ -42,5 +44,11 @@ def run_years(start_year, end_year, stat_str, num_sims=100, thresholds=[0.05, 0.
       probs.append(deathprob(age, years))
     sims = build_sims(num_sims, len(ages))
     death_counts = count_deaths(probs, sims)
-    results[year] = death_thresholds(death_counts, thresholds)
+    death_rates = death_thresholds(death_counts, thresholds)
+    for threshold in thresholds:
+      results[threshold][year] = death_rates[threshold]
   return results
+  
+def build_graph_data(results, num):
+  thresholds = results[datetime.datetime.today().year].keys()
+  
