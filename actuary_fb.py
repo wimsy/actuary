@@ -81,95 +81,98 @@ def calcexp(ages, prob, flag):
 
 
 #Print actuary results from fbdata
-
+def parse_string(fbdata):
+  the_args = fbdata.split()
+  ages = []
+  for arg in the_args: #changes male ages to negative floats females
+    gender=1
+    years=1.0
+    if arg[-1]=='m' or arg[-1]=='M':
+        try:
+            ages.append(1*float(arg[:-1]))
+        except:
+            print "Error parsing argument", arg
+    elif arg[-1]=='f' or arg[-1]=='F':
+        try:
+            ages.append(-1*float(arg[:-1]))
+        except:
+            print "Error parsing argument", arg
+    else:
+        try:
+            years=float(arg)
+            break
+        except:
+            print "Error parsing argument", arg
+  return ages, years
 
 def print_actuary(fbdata):
-    the_args = fbdata.split()
-    ages = []
+    
+  ages, years = parse_string(fbdata)
+    
 
-    for arg in the_args: #changes male ages to negative floats females
-        gender=1
-        years=1.0
-        if arg[-1]=='m' or arg[-1]=='M':
-            try:
-                ages.append(1*float(arg[:-1]))
-            except:
-                print "Error parsing argument", arg
-        elif arg[-1]=='f' or arg[-1]=='F':
-            try:
-                ages.append(-1*float(arg[:-1]))
-            except:
-                print "Error parsing argument", arg
-        else:
-            try:
-                years=float(arg)
-                break
-            except:
-                print "Error parsing argument", arg
+  # Need to turn this into a string to include in web templates.
+  analysis_str = []
 
-    # Need to turn this into a string to include in web templates.
-    analysis_str = []
+  (datetime.date.today()+datetime.timedelta(days=365.242191*1)).year
+  someone_years=[calcexp(ages, 0.05, 1),
+                 calcexp(ages, 0.5, 1),
+                 calcexp(ages, 0.95, 1)]
+  someone_dates=[(datetime.date.today()+datetime.timedelta(days=365.242191*someone_years[0])).year,
+                 (datetime.date.today()+datetime.timedelta(days=365.242191*someone_years[1])).year,
+                 (datetime.date.today()+datetime.timedelta(days=365.242191*someone_years[2])).year]
+  analysis_str.append("There is a 5%  chance of someone dying within " + \
+    str(someone_years[0]) + " years (by " + str(someone_dates[0]) + ").")
+  analysis_str.append("There is a 50% chance of someone dying within " + \
+    str(someone_years[1]) + " years (by " + str(someone_dates[1]) + ").")
+  analysis_str.append("There is a 95% chance of someone dying within " + \
+    str(someone_years[2]) + " years (by " + str(someone_dates[2]) + ").")
+  analysis_str.append("")
 
-    (datetime.date.today()+datetime.timedelta(days=365.242191*1)).year
-    someone_years=[calcexp(ages, 0.05, 1),
-                   calcexp(ages, 0.5, 1),
-                   calcexp(ages, 0.95, 1)]
-    someone_dates=[(datetime.date.today()+datetime.timedelta(days=365.242191*someone_years[0])).year,
-                   (datetime.date.today()+datetime.timedelta(days=365.242191*someone_years[1])).year,
-                   (datetime.date.today()+datetime.timedelta(days=365.242191*someone_years[2])).year]
-    analysis_str.append("There is a 5%  chance of someone dying within " + \
-      str(someone_years[0]) + " years (by " + str(someone_dates[0]) + ").")
-    analysis_str.append("There is a 50% chance of someone dying within " + \
-      str(someone_years[1]) + " years (by " + str(someone_dates[1]) + ").")
-    analysis_str.append("There is a 95% chance of someone dying within " + \
-      str(someone_years[2]) + " years (by " + str(someone_dates[2]) + ").")
-    analysis_str.append("")
-
-    if len(ages)>1:
-        everyone_years=[calcexp(ages, 0.05, 0),
-                       calcexp(ages, 0.5, 0),
-                       calcexp(ages, 0.95, 0)]
-        everyone_dates=[(datetime.date.today()+datetime.timedelta(days=365.242191*everyone_years[0])).year,
-                       (datetime.date.today()+datetime.timedelta(days=365.242191*everyone_years[1])).year,
-                       (datetime.date.today()+datetime.timedelta(days=365.242191*everyone_years[2])).year]
-        analysis_str.append("There is a 5%  chance of everyone dying within " + \
-          str(everyone_years[0]) + " years (by " + str(everyone_dates[0]) + ").")
-        analysis_str.append("There is a 50% chance of everyone dying within " + \
-          str(everyone_years[1]) + " years (by " + str(everyone_dates[1]) + ").")
-        analysis_str.append("There is a 95% chance of everyone dying within " + \
-          str(everyone_years[2]) + " years (by " + str(everyone_dates[2]) + ").")
+  if len(ages)>1:
+      everyone_years=[calcexp(ages, 0.05, 0),
+                     calcexp(ages, 0.5, 0),
+                     calcexp(ages, 0.95, 0)]
+      everyone_dates=[(datetime.date.today()+datetime.timedelta(days=365.242191*everyone_years[0])).year,
+                     (datetime.date.today()+datetime.timedelta(days=365.242191*everyone_years[1])).year,
+                     (datetime.date.today()+datetime.timedelta(days=365.242191*everyone_years[2])).year]
+      analysis_str.append("There is a 5%  chance of everyone dying within " + \
+        str(everyone_years[0]) + " years (by " + str(everyone_dates[0]) + ").")
+      analysis_str.append("There is a 50% chance of everyone dying within " + \
+        str(everyone_years[1]) + " years (by " + str(everyone_dates[1]) + ").")
+      analysis_str.append("There is a 95% chance of everyone dying within " + \
+        str(everyone_years[2]) + " years (by " + str(everyone_dates[2]) + ").")
 
 
-    if years:
-        yearword="years"
-        if years==1:
-            yearword="year"
+  if years:
+      yearword="years"
+      if years==1:
+          yearword="year"
 
-        analysis_str.append("")
-        if years>datetime.date.today().year:
-            years=years-datetime.date.today().year
-        if len(ages)>1:
-            p=100*proballdie(ages, years)
-            printable=""
-            if p<0.001:
-                printable="<0.001"
-            elif p>99.99:
-                printable=">99.99"
-            else:
-                printable=str(p)[:5]
-            analysis_str.append("Probability of all dying in " + \
-              str(years) + " " + yearword + ": " + printable + "%")
-        p=100*probanydie(ages, years)
-        printable=""
-        if p<0.001:
-            printable="<0.001"
-        elif p>99.99:
-            printable=">99.99"
-            print p
-        else:
-            printable=str(p)[:5]
-        analysis_str.append("Probability of a death within " + \
-          str(years) + " " + yearword + ": " + printable + "%")
-    return "\n".join(analysis_str)
+      analysis_str.append("")
+      if years>datetime.date.today().year:
+          years=years-datetime.date.today().year
+      if len(ages)>1:
+          p=100*proballdie(ages, years)
+          printable=""
+          if p<0.001:
+              printable="<0.001"
+          elif p>99.99:
+              printable=">99.99"
+          else:
+              printable=str(p)[:5]
+          analysis_str.append("Probability of all dying in " + \
+            str(years) + " " + yearword + ": " + printable + "%")
+      p=100*probanydie(ages, years)
+      printable=""
+      if p<0.001:
+          printable="<0.001"
+      elif p>99.99:
+          printable=">99.99"
+          print p
+      else:
+          printable=str(p)[:5]
+      analysis_str.append("Probability of a death within " + \
+        str(years) + " " + yearword + ": " + printable + "%")
+  return "\n".join(analysis_str)
 
 
